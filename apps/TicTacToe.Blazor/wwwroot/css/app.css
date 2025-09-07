@@ -1,0 +1,93 @@
+:root {
+  --color-background: #0F1116;
+  --color-surface: #171B22;
+  --color-surface-hover: #1E2430;
+  --color-surface-pressed: #11151C;
+  --color-accent: #4F8CFF;
+  --color-accent-muted: #2F5FB8;
+  --color-text: #E6EAF2;
+  --color-text-muted: #A9B0BD;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+}
+
+.main {
+  padding: 12px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+button {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-accent);
+}
+
+button:active:not(:disabled) {
+  background-color: var(--color-surface-pressed);
+  border-color: var(--color-accent-muted);
+}
+
+button:disabled {
+  background-color: #12151B;
+  border-color: #20242C;
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.board {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.cell {
+  font-size: 32px;
+  min-width: 72px;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.win-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 240px;
+  pointer-events: none;
+}
+
+.win-lines line {
+  stroke: var(--color-accent);
+  stroke-width: 6;
+  visibility: hidden;
+  filter: drop-shadow(0 0 10px var(--color-accent));
+}
+
+.win-lines line.visible {
+  visibility: visible;
+}
