@@ -9,15 +9,51 @@
             <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center"/>
         </StackPanel>
         <UniformGrid Rows="3" Columns="3">
-            <Button Content="{Binding Cells[0]}" Command="{Binding CellClickCommand}" CommandParameter="{x:Int32 0}" FontSize="32"/>
-            <Button Content="{Binding Cells[1]}" Command="{Binding CellClickCommand}" CommandParameter="{x:Int32 1}" FontSize="32"/>
-            <Button Content="{Binding Cells[2]}" Command="{Binding CellClickCommand}" CommandParameter="{x:Int32 2}" FontSize="32"/>
-            <Button Content="{Binding Cells[3]}" Command="{Binding CellClickCommand}" CommandParameter="{x:Int32 3}" FontSize="32"/>
-            <Button Content="{Binding Cells[4]}" Command="{Binding CellClickCommand}" CommandParameter="{x:Int32 4}" FontSize="32"/>
-            <Button Content="{Binding Cells[5]}" Command="{Binding CellClickCommand}" CommandParameter="{x:Int32 5}" FontSize="32"/>
-            <Button Content="{Binding Cells[6]}" Command="{Binding CellClickCommand}" CommandParameter="{x:Int32 6}" FontSize="32"/>
-            <Button Content="{Binding Cells[7]}" Command="{Binding CellClickCommand}" CommandParameter="{x:Int32 7}" FontSize="32"/>
-            <Button Content="{Binding Cells[8]}" Command="{Binding CellClickCommand}" CommandParameter="{x:Int32 8}" FontSize="32"/>
+            <Button Content="{Binding Cells[0]}" Command="{Binding CellClickCommand}" FontSize="32">
+                <Button.CommandParameter>
+                    <x:Int32>0</x:Int32>
+                </Button.CommandParameter>
+            </Button>
+            <Button Content="{Binding Cells[1]}" Command="{Binding CellClickCommand}" FontSize="32">
+                <Button.CommandParameter>
+                    <x:Int32>1</x:Int32>
+                </Button.CommandParameter>
+            </Button>
+            <Button Content="{Binding Cells[2]}" Command="{Binding CellClickCommand}" FontSize="32">
+                <Button.CommandParameter>
+                    <x:Int32>2</x:Int32>
+                </Button.CommandParameter>
+            </Button>
+            <Button Content="{Binding Cells[3]}" Command="{Binding CellClickCommand}" FontSize="32">
+                <Button.CommandParameter>
+                    <x:Int32>3</x:Int32>
+                </Button.CommandParameter>
+            </Button>
+            <Button Content="{Binding Cells[4]}" Command="{Binding CellClickCommand}" FontSize="32">
+                <Button.CommandParameter>
+                    <x:Int32>4</x:Int32>
+                </Button.CommandParameter>
+            </Button>
+            <Button Content="{Binding Cells[5]}" Command="{Binding CellClickCommand}" FontSize="32">
+                <Button.CommandParameter>
+                    <x:Int32>5</x:Int32>
+                </Button.CommandParameter>
+            </Button>
+            <Button Content="{Binding Cells[6]}" Command="{Binding CellClickCommand}" FontSize="32">
+                <Button.CommandParameter>
+                    <x:Int32>6</x:Int32>
+                </Button.CommandParameter>
+            </Button>
+            <Button Content="{Binding Cells[7]}" Command="{Binding CellClickCommand}" FontSize="32">
+                <Button.CommandParameter>
+                    <x:Int32>7</x:Int32>
+                </Button.CommandParameter>
+            </Button>
+            <Button Content="{Binding Cells[8]}" Command="{Binding CellClickCommand}" FontSize="32">
+                <Button.CommandParameter>
+                    <x:Int32>8</x:Int32>
+                </Button.CommandParameter>
+            </Button>
         </UniformGrid>
-    </DockPanel>
+        </DockPanel>
 </Window>
