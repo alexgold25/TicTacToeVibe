@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
+using System.Linq;
 using TicTacToeVibe.Core;
 
 namespace TicTacToeVibe.Wpf;
@@ -17,12 +19,11 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _game = game;
         _ai = ai;
-        Cells = new string[9];
         UpdateState();
     }
 
-    [ObservableProperty]
-    private string[] cells;
+    /// <summary>Cells displayed on the board.</summary>
+    public ObservableCollection<string> Cells { get; } = new(Enumerable.Repeat(string.Empty, 9));
 
     [ObservableProperty]
     private string statusText = string.Empty;
