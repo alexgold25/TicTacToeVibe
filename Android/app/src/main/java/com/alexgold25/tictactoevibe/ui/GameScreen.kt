@@ -19,7 +19,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.awaitPointerEventScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -57,16 +59,17 @@ fun GameScreen(modifier: Modifier = Modifier) {
                                         if (isHovered) MaterialTheme.colorScheme.surfaceVariant
                                         else MaterialTheme.colorScheme.surface
                                     )
-                                    .pointerMoveFilter(
-                                        onEnter = {
-                                            hovered = r to c
-                                            false
-                                        },
-                                        onExit = {
-                                            hovered = null
-                                            false
+                                    .pointerInput(Unit) {
+                                        awaitPointerEventScope {
+                                            while (true) {
+                                                val event = awaitPointerEvent()
+                                                when (event.type) {
+                                                    PointerEventType.Enter -> hovered = r to c
+                                                    PointerEventType.Exit -> hovered = null
+                                                }
+                                            }
                                         }
-                                    )
+                                    }
                                     .clickable(enabled = cell == null && winInfo == null) {
                                         board = board.mapIndexed { row, cols ->
                                             cols.mapIndexed { col, value ->
