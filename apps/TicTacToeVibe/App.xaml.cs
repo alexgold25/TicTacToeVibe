@@ -23,14 +23,16 @@ public partial class App : Application
         });
 
     /// <inheritdoc />
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
-        base.OnStartup(e);
         _host = CreateHostBuilder().Build();
-        _host.Start();
+        await _host.StartAsync();
+
         var window = _host.Services.GetRequiredService<MainWindow>();
         MainWindow = window;
         window.Show();
+
+        base.OnStartup(e);
     }
 
     /// <inheritdoc />
