@@ -191,16 +191,16 @@ fun GameScreen(modifier: Modifier = Modifier) {
         }
 
         // Игровое поле (квадрат)
-        BoxWithConstraints(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1f)
+                .aspectRatio(1f),
             contentAlignment = Alignment.Center
         ) {
-            val boardSize = minOf(maxWidth, maxHeight)
             val gap = 4.dp
 
-            Box(modifier = Modifier.size(boardSize)) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 Column(Modifier.fillMaxSize()) {
                     for (r in 0..2) {
                         Row(Modifier.weight(1f)) {
