@@ -23,7 +23,7 @@ public sealed class MinimaxAi : IComputerPlayer
         {
             var clone = board.Clone();
             clone.TryApply(move);
-            var score = Minimax(clone, false, int.MinValue, int.MaxValue, board.CurrentPlayer);
+            var score = Minimax(clone, false, int.MinValue, int.MaxValue, board.CurrentPlayer, 1);
             if (score > bestScore)
             {
                 bestScore = score;
@@ -72,19 +72,19 @@ public sealed class MinimaxAi : IComputerPlayer
         }
     }
 
-    private static int Minimax(Board board, bool maximizing, int alpha, int beta, Player ai)
+    private static int Minimax(Board board, bool maximizing, int alpha, int beta, Player ai, int depth)
     {
         if (board.IsGameOver)
         {
             if (board.Winner == ai)
             {
-                return 1;
+                return 10 - depth;
             }
             if (board.Winner is null)
             {
                 return 0;
             }
-            return -1;
+            return depth - 10;
         }
 
         if (maximizing)
@@ -94,7 +94,7 @@ public sealed class MinimaxAi : IComputerPlayer
             {
                 var clone = board.Clone();
                 clone.TryApply(move);
-                value = Math.Max(value, Minimax(clone, false, alpha, beta, ai));
+                value = Math.Max(value, Minimax(clone, false, alpha, beta, ai, depth + 1));
                 alpha = Math.Max(alpha, value);
                 if (alpha >= beta)
                 {
@@ -110,7 +110,7 @@ public sealed class MinimaxAi : IComputerPlayer
             {
                 var clone = board.Clone();
                 clone.TryApply(move);
-                value = Math.Min(value, Minimax(clone, true, alpha, beta, ai));
+                value = Math.Min(value, Minimax(clone, true, alpha, beta, ai, depth + 1));
                 beta = Math.Min(beta, value);
                 if (alpha >= beta)
                 {
