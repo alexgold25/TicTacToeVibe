@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalComposeUiApi::class)
+@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 
 package com.alexgold25.tictactoevibe.ui
 
@@ -9,8 +9,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -19,8 +23,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.pointerInput
+//import androidx.compose.ui.input.pointer.PointerEventType
+//import androidx.compose.ui.input.pointer.pointerInput
 //import androidx.compose.ui.input.pointer.awaitPointerEventScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +44,7 @@ fun GameScreen(modifier: Modifier = Modifier) {
     var board by remember { mutableStateOf(List(9) { null as String? }) }
     var currentPlayer by remember { mutableStateOf("X") }
     var winInfo by remember { mutableStateOf<WinInfo?>(null) }
+    var isHumanVsAi by remember { mutableStateOf(true) }
 
     fun reset() {
         board = List(9) { null }
@@ -72,6 +77,64 @@ fun GameScreen(modifier: Modifier = Modifier) {
             return WinInfo(WinType.DIAGONAL_ANTI)
         }
         return null
+    }
+
+    fun winnerSymbol(cells: List<String?>): String? {
+        val info = checkWinnerFlat(cells) ?: return null
+        return when (info.type) {
+            WinType.ROW -> cells[info.index * 3]
+            WinType.COLUMN -> cells[info.index]
+            WinType.DIAGONAL_MAIN -> cells[0]
+            WinType.DIAGONAL_ANTI -> cells[2]
+        }
+    }
+
+    fun bestMove(cells: List<String?>): Int? {
+        var bestScore = Int.MIN_VALUE
+        var move: Int? = null
+        for (i in cells.indices) {
+            if (cells[i] == null) {
+                val copy = cells.toMutableList()
+                copy[i] = "O"
+                val score = minimax(copy, false)
+                if (score > bestScore) {
+                    bestScore = score
+                    move = i
+                }
+            }
+        }
+        return move
+    }
+
+    fun minimax(cells: MutableList<String?>, maximizing: Boolean): Int {
+        val win = winnerSymbol(cells)
+        if (win == "O") return 1
+        if (win == "X") return -1
+        if (cells.all { it != null }) return 0
+
+        return if (maximizing) {
+            var best = Int.MIN_VALUE
+            for (i in cells.indices) {
+                if (cells[i] == null) {
+                    cells[i] = "O"
+                    val score = minimax(cells, false)
+                    cells[i] = null
+                    if (score > best) best = score
+                }
+            }
+            best
+        } else {
+            var best = Int.MAX_VALUE
+            for (i in cells.indices) {
+                if (cells[i] == null) {
+                    cells[i] = "X"
+                    val score = minimax(cells, true)
+                    cells[i] = null
+                    if (score < best) best = score
+                }
+            }
+            best
+        }
     }
 
     val statusText by remember(board, winInfo, currentPlayer) {
@@ -107,9 +170,23 @@ fun GameScreen(modifier: Modifier = Modifier) {
         ) {
             Text(text = statusText, color = MaterialTheme.colorScheme.onBackground)
             Spacer(Modifier.weight(1f))
-            androidx.compose.material3.Button(onClick = { reset() }) {
-                Text("New Game")
-            }
+            Button(onClick = { reset() }) { Text("New Game") }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FilterChip(
+                selected = !isHumanVsAi,
+                onClick = { isHumanVsAi = false; reset() },
+                label = { Text("2 Players") }
+            )
+            FilterChip(
+                selected = isHumanVsAi,
+                onClick = { isHumanVsAi = true; reset() },
+                label = { Text("Vs Computer") }
+            )
         }
 
         // Игровое поле (квадрат)
@@ -139,26 +216,40 @@ fun GameScreen(modifier: Modifier = Modifier) {
                                         .weight(1f)
                                         .fillMaxHeight()
                                         .padding(gap)
-                                        .border(1.dp, MaterialTheme.colorScheme.primary)
+                                        .clip(RoundedCornerShape(12.dp))
                                         .background(
                                             if (pressed)
                                                 MaterialTheme.colorScheme.surfaceVariant
                                             else
-                                                MaterialTheme.colorScheme.surface
+                                                MaterialTheme.colorScheme.surface,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+                                        .border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.primary,
+                                            RoundedCornerShape(12.dp)
                                         )
                                         .clickable(
                                             interactionSource = interaction,
-                                            indication = androidx.compose.foundation.LocalIndication.current,
+                                            indication = LocalIndication.current,
                                             enabled = (cell == null && winInfo == null)
                                         ) {
                                             if (board[idx] == null && winInfo == null) {
-                                                // применяем ход
                                                 board = board.toMutableList().also { it[idx] = currentPlayer }
-                                                // проверяем победу
                                                 winInfo = checkWinnerFlat(board)
-                                                // если игра не окончена — меняем игрока
                                                 if (winInfo == null && !isBoardFull()) {
-                                                    currentPlayer = if (currentPlayer == "X") "O" else "X"
+                                                    if (isHumanVsAi) {
+                                                        val aiIdx = bestMove(board)
+                                                        if (aiIdx != null) {
+                                                            board = board.toMutableList().also { it[aiIdx] = "O" }
+                                                            winInfo = checkWinnerFlat(board)
+                                                        }
+                                                        if (winInfo == null && !isBoardFull()) {
+                                                            currentPlayer = "X"
+                                                        }
+                                                    } else {
+                                                        currentPlayer = if (currentPlayer == "X") "O" else "X"
+                                                    }
                                                 }
                                             }
                                         },
@@ -175,7 +266,7 @@ fun GameScreen(modifier: Modifier = Modifier) {
                     }
                 }
 
-                // Линия победы (с мягким блюром и небольшой анимацией)
+                // Линия победы с неоновым свечением
                 winInfo?.let { info ->
                     val winLineColor = MaterialTheme.colorScheme.primary.toArgb()
                     val progress by animateFloatAsState(targetValue = 1f, label = "win-line")
@@ -185,12 +276,19 @@ fun GameScreen(modifier: Modifier = Modifier) {
                         val cellSide = side / 3f
                         val stroke = side / 15f
 
-                        val paint = Paint().apply {
+                        val glowPaint = Paint().apply {
                             color = winLineColor
                             isAntiAlias = true
                             style = Paint.Style.STROKE
-                            strokeWidth = stroke
-                            maskFilter = BlurMaskFilter(stroke, BlurMaskFilter.Blur.NORMAL)
+                            strokeWidth = stroke * 1.5f
+                            maskFilter = BlurMaskFilter(stroke * 2f, BlurMaskFilter.Blur.NORMAL)
+                        }
+
+                        val linePaint = Paint().apply {
+                            color = winLineColor
+                            isAntiAlias = true
+                            style = Paint.Style.STROKE
+                            strokeWidth = stroke / 2f
                         }
 
                         val (start, end) = when (info.type) {
@@ -216,30 +314,12 @@ fun GameScreen(modifier: Modifier = Modifier) {
                         )
 
                         drawIntoCanvas { canvas ->
-                            canvas.nativeCanvas.drawLine(start.x, start.y, animatedEnd.x, animatedEnd.y, paint)
+                            canvas.nativeCanvas.drawLine(start.x, start.y, animatedEnd.x, animatedEnd.y, glowPaint)
+                            canvas.nativeCanvas.drawLine(start.x, start.y, animatedEnd.x, animatedEnd.y, linePaint)
                         }
                     }
                 }
             }
         }
     }
-}
-
-
-private fun checkWinner(board: List<List<String?>>): WinInfo? {
-    for (i in 0..2) {
-        if (board[i][0] != null && board[i][0] == board[i][1] && board[i][0] == board[i][2]) {
-            return WinInfo(WinType.ROW, i)
-        }
-        if (board[0][i] != null && board[0][i] == board[1][i] && board[0][i] == board[2][i]) {
-            return WinInfo(WinType.COLUMN, i)
-        }
-    }
-    if (board[0][0] != null && board[0][0] == board[1][1] && board[0][0] == board[2][2]) {
-        return WinInfo(WinType.DIAGONAL_MAIN)
-    }
-    if (board[0][2] != null && board[0][2] == board[1][1] && board[0][2] == board[2][0]) {
-        return WinInfo(WinType.DIAGONAL_ANTI)
-    }
-    return null
 }
