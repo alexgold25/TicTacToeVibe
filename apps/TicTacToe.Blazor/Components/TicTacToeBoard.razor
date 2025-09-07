@@ -1,6 +1,6 @@
 @using TicTacToeVibe.Core
 @inject IGameService Game
-@inject IComputerPlayer Ai
+@inject IComputerPlayer? Ai
 
 <div class="controls">
     <input type="checkbox" @bind="isHumanVsAi" /> Human vs AI
@@ -40,7 +40,7 @@
         if (Game.Play(ToMove(index)))
         {
             UpdateState();
-            if (isHumanVsAi && !Game.Board.IsGameOver)
+            if (isHumanVsAi && Ai is not null && !Game.Board.IsGameOver)
             {
                 var move = Ai.ChooseMove(Game.Board.Clone());
                 if (move.HasValue)
