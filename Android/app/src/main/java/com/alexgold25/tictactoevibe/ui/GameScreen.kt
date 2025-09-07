@@ -20,7 +20,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.input.pointer.awaitPointerEvent
+import androidx.compose.ui.input.pointer.awaitPointerEventScope
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -47,7 +49,7 @@ fun GameScreen(modifier: Modifier = Modifier) {
                     Row(Modifier.weight(1f)) {
                         for (c in 0..2) {
                             val cell = board[r][c]
-                            val isHovered = hovered == r to c
+                            val isHovered = hovered == (r to c)
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -58,11 +60,17 @@ fun GameScreen(modifier: Modifier = Modifier) {
                                         if (isHovered) MaterialTheme.colorScheme.surfaceVariant
                                         else MaterialTheme.colorScheme.surface
                                     )
-                                    .onPointerEvent(PointerEventType.Enter) {
-                                        hovered = r to c
-                                    }
-                                    .onPointerEvent(PointerEventType.Exit) {
-                                        hovered = null
+                                    .pointerInput(Unit) {
+                                        awaitPointerEventScope {
+                                            while (true) {
+                                                val event = awaitPointerEvent()
+                                                when (event.type) {
+                                                    PointerEventType.Enter -> hovered = r to c
+                                                    PointerEventType.Exit -> hovered = null
+                                                    else -> {}
+                                                }
+                                            }
+                                        }
                                     }
                                     .clickable(enabled = cell == null && winInfo == null) {
                                         board = board.mapIndexed { row, cols ->
@@ -89,10 +97,11 @@ fun GameScreen(modifier: Modifier = Modifier) {
             }
 
             winInfo?.let { info ->
+                val winLineColor = MaterialTheme.colorScheme.primary.toArgb()
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val stroke = size.minDimension / 15f
                     val paint = Paint().apply {
-                        color = MaterialTheme.colorScheme.primary.toArgb()
+                        color = winLineColor
                         isAntiAlias = true
                         style = Paint.Style.STROKE
                         strokeWidth = stroke
