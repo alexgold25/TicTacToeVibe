@@ -18,7 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -56,16 +58,12 @@ fun GameScreen(modifier: Modifier = Modifier) {
                                         if (isHovered) MaterialTheme.colorScheme.surfaceVariant
                                         else MaterialTheme.colorScheme.surface
                                     )
-                                    .pointerMoveFilter(
-                                        onEnter = {
-                                            hovered = r to c
-                                            false
-                                        },
-                                        onExit = {
-                                            hovered = null
-                                            false
-                                        }
-                                    )
+                                    .onPointerEvent(PointerEventType.Enter) {
+                                        hovered = r to c
+                                    }
+                                    .onPointerEvent(PointerEventType.Exit) {
+                                        hovered = null
+                                    }
                                     .clickable(enabled = cell == null && winInfo == null) {
                                         board = board.mapIndexed { row, cols ->
                                             cols.mapIndexed { col, value ->
