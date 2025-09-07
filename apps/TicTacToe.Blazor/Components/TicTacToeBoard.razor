@@ -10,7 +10,12 @@
 <div class="board">
     @for (var i = 0; i < 9; i++)
     {
-        <button class="cell" disabled="@IsDisabled(i)" @onclick="(() => Click(i))">@cells[i]</button>
+        var idx = i; // <- фикс: отдельна€ переменна€ на итерацию
+                     <button class="cell"
+                             disabled="@IsDisabled(idx)"
+                             @onclick="(() => Click(idx))">
+                         @cells[idx]
+                     </button>
     }
     <svg class="win-lines">
         <line x1="0" y1="40" x2="240" y2="40" class="@LineClass(WinningLine.Row0)" />
@@ -23,6 +28,7 @@
         <line x1="0" y1="240" x2="240" y2="0" class="@LineClass(WinningLine.DiagonalAnti)" />
     </svg>
 </div>
+
 
 @code {
     private readonly string[] cells = new string[9];
@@ -37,20 +43,20 @@
 
     private void Click(int index)
     {
+        if ((uint)index > 8) return; // быстрый guard
+
         if (Game.Play(ToMove(index)))
         {
             UpdateState();
             if (isHumanVsAi && Ai is not null && !Game.Board.IsGameOver)
             {
                 var move = Ai.ChooseMove(Game.Board.Clone());
-                if (move.HasValue)
-                {
-                    Game.Play(move.Value);
-                }
+                if (move.HasValue) Game.Play(move.Value);
                 UpdateState();
             }
         }
     }
+
 
     private void NewGame()
     {
