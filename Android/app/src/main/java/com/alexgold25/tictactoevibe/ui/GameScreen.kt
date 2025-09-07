@@ -23,6 +23,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.draw.clip
 //import androidx.compose.ui.input.pointer.PointerEventType
 //import androidx.compose.ui.input.pointer.pointerInput
 //import androidx.compose.ui.input.pointer.awaitPointerEventScope
@@ -89,23 +90,6 @@ fun GameScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    fun bestMove(cells: List<String?>): Int? {
-        var bestScore = Int.MIN_VALUE
-        var move: Int? = null
-        for (i in cells.indices) {
-            if (cells[i] == null) {
-                val copy = cells.toMutableList()
-                copy[i] = "O"
-                val score = minimax(copy, false)
-                if (score > bestScore) {
-                    bestScore = score
-                    move = i
-                }
-            }
-        }
-        return move
-    }
-
     fun minimax(cells: MutableList<String?>, maximizing: Boolean): Int {
         val win = winnerSymbol(cells)
         if (win == "O") return 1
@@ -135,6 +119,23 @@ fun GameScreen(modifier: Modifier = Modifier) {
             }
             best
         }
+    }
+
+    fun bestMove(cells: List<String?>): Int? {
+        var bestScore = Int.MIN_VALUE
+        var move: Int? = null
+        for (i in cells.indices) {
+            if (cells[i] == null) {
+                val copy = cells.toMutableList()
+                copy[i] = "O"
+                val score = minimax(copy, false)
+                if (score > bestScore) {
+                    bestScore = score
+                    move = i
+                }
+            }
+        }
+        return move
     }
 
     val statusText by remember(board, winInfo, currentPlayer) {
