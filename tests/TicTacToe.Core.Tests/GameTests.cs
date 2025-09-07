@@ -101,4 +101,17 @@ public class GameTests
         // O can win by playing (1,2)
         ai.ChooseMove(board).Should().Be(new Move(1,2));
     }
+
+    [Fact]
+    public void AiChoosesImmediateWinOverDelayedWin()
+    {
+        var board = new Board();
+        board.TryApply(new Move(0,0)); // X
+        board.TryApply(new Move(1,0)); // O
+        board.TryApply(new Move(0,1)); // X
+        board.TryApply(new Move(2,0)); // O
+        var ai = new MinimaxAi();
+        // X can win immediately at (0,2) but center also leads to a win later
+        ai.ChooseMove(board).Should().Be(new Move(0,2));
+    }
 }
