@@ -1,0 +1,80 @@
+@using TicTacToeVibe.Core
+@inject IGameService Game
+@inject IComputerPlayer Ai
+
+<div class="controls">
+    <input type="checkbox" @bind="isHumanVsAi" /> Human vs AI
+    <button @onclick="NewGame">New Game</button>
+    <span>@statusText</span>
+</div>
+<div class="board">
+    @for (var i = 0; i < 9; i++)
+    {
+        <button disabled="@IsDisabled(i)" @onclick="(() => Click(i))" style="width:60px;height:60px;font-size:24px;">@cells[i]</button>
+        if ((i + 1) % 3 == 0)
+        {
+            <br />
+        }
+    }
+</div>
+
+@code {
+    private readonly string[] cells = new string[9];
+    private string statusText = string.Empty;
+    private bool isHumanVsAi = true;
+
+    protected override void OnInitialized()
+    {
+        UpdateState();
+    }
+
+    private void Click(int index)
+    {
+        if (Game.Play(ToMove(index)))
+        {
+            UpdateState();
+            if (isHumanVsAi && !Game.Board.IsGameOver)
+            {
+                var move = Ai.ChooseMove(Game.Board.Clone());
+                if (move.HasValue)
+                {
+                    Game.Play(move.Value);
+                }
+                UpdateState();
+            }
+        }
+    }
+
+    private void NewGame()
+    {
+        Game.Reset();
+        UpdateState();
+    }
+
+    private bool IsDisabled(int index) => Game.Board.IsGameOver || Game.Board[index / 3, index % 3] != Player.None;
+
+    private void UpdateState()
+    {
+        for (var i = 0; i < 9; i++)
+        {
+            cells[i] = Symbol(Game.Board[i / 3, i % 3]);
+        }
+        statusText = Game.Board.IsGameOver
+            ? Game.Board.Winner switch
+            {
+                Player.X => "X wins",
+                Player.O => "O wins",
+                _ => "Draw"
+            }
+            : $"Turn: {Game.Board.CurrentPlayer}";
+    }
+
+    private static Move ToMove(int index) => new(index / 3, index % 3);
+
+    private static string Symbol(Player player) => player switch
+    {
+        Player.X => "X",
+        Player.O => "O",
+        _ => string.Empty
+    };
+}
