@@ -4,44 +4,129 @@ package com.alexgold25.tictactoevibe.ui
 
 import android.graphics.BlurMaskFilter
 import android.graphics.Paint
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.draw.clip
-//import androidx.compose.ui.input.pointer.PointerEventType
-//import androidx.compose.ui.input.pointer.pointerInput
-//import androidx.compose.ui.input.pointer.awaitPointerEventScope
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-//import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.animation.core.animateFloatAsState
-
-
 
 enum class WinType { ROW, COLUMN, DIAGONAL_MAIN, DIAGONAL_ANTI }
 data class WinInfo(val type: WinType, val index: Int = 0)
+
+fun checkWinnerFlat(cells: List<String?>): WinInfo? {
+    for (r in 0..2) {
+        val a = r * 3
+        if (cells[a] != null && cells[a] == cells[a + 1] && cells[a] == cells[a + 2]) {
+            return WinInfo(WinType.ROW, r)
+        }
+    }
+    for (c in 0..2) {
+        if (cells[c] != null && cells[c] == cells[c + 3] && cells[c] == cells[c + 6]) {
+            return WinInfo(WinType.COLUMN, c)
+        }
+    }
+    if (cells[0] != null && cells[0] == cells[4] && cells[0] == cells[8]) {
+        return WinInfo(WinType.DIAGONAL_MAIN)
+    }
+    if (cells[2] != null && cells[2] == cells[4] && cells[2] == cells[6]) {
+        return WinInfo(WinType.DIAGONAL_ANTI)
+    }
+    return null
+}
+
+fun winnerSymbol(cells: List<String?>): String? {
+    val info = checkWinnerFlat(cells) ?: return null
+    return when (info.type) {
+        WinType.ROW -> cells[info.index * 3]
+        WinType.COLUMN -> cells[info.index]
+        WinType.DIAGONAL_MAIN -> cells[0]
+        WinType.DIAGONAL_ANTI -> cells[2]
+    }
+}
+
+private fun minimax(
+    cells: MutableList<String?>,
+    maximizing: Boolean,
+    depth: Int,
+    alpha: Int,
+    beta: Int
+): Int {
+    val win = winnerSymbol(cells)
+    if (win == "O") return 10 - depth
+    if (win == "X") return depth - 10
+    if (cells.all { it != null }) return 0
+
+    var a = alpha
+    var b = beta
+    return if (maximizing) {
+        var best = Int.MIN_VALUE
+        for (i in cells.indices) {
+            if (cells[i] == null) {
+                cells[i] = "O"
+                val score = minimax(cells, false, depth + 1, a, b)
+                cells[i] = null
+                if (score > best) best = score
+                if (best > a) a = best
+                if (a >= b) break
+            }
+        }
+        best
+    } else {
+        var best = Int.MAX_VALUE
+        for (i in cells.indices) {
+            if (cells[i] == null) {
+                cells[i] = "X"
+                val score = minimax(cells, true, depth + 1, a, b)
+                cells[i] = null
+                if (score < best) best = score
+                if (best < b) b = best
+                if (a >= b) break
+            }
+        }
+        best
+    }
+}
+
+fun bestMove(cells: List<String?>): Int? {
+    var bestScore = Int.MIN_VALUE
+    var move: Int? = null
+    for (i in cells.indices) {
+        if (cells[i] == null) {
+            val copy = cells.toMutableList()
+            copy[i] = "O"
+            val score = minimax(copy, false, 1, Int.MIN_VALUE, Int.MAX_VALUE)
+            if (score > bestScore) {
+                bestScore = score
+                move = i
+            }
+        }
+    }
+    return move
+}
+
 @Composable
 fun GameScreen(modifier: Modifier = Modifier) {
-    // Плоское поле 3x3: индексы 0..8
     var board by remember { mutableStateOf(List(9) { null as String? }) }
     var currentPlayer by remember { mutableStateOf("X") }
     var winInfo by remember { mutableStateOf<WinInfo?>(null) }
@@ -54,89 +139,6 @@ fun GameScreen(modifier: Modifier = Modifier) {
     }
 
     fun isBoardFull() = board.all { it != null }
-
-    // Определяем победителя/линию на плоском поле
-    fun checkWinnerFlat(cells: List<String?>): WinInfo? {
-        // строки
-        for (r in 0..2) {
-            val a = r * 3
-            if (cells[a] != null && cells[a] == cells[a + 1] && cells[a] == cells[a + 2]) {
-                return WinInfo(WinType.ROW, r)
-            }
-        }
-        // столбцы
-        for (c in 0..2) {
-            if (cells[c] != null && cells[c] == cells[c + 3] && cells[c] == cells[c + 6]) {
-                return WinInfo(WinType.COLUMN, c)
-            }
-        }
-        // диагонали
-        if (cells[0] != null && cells[0] == cells[4] && cells[0] == cells[8]) {
-            return WinInfo(WinType.DIAGONAL_MAIN)
-        }
-        if (cells[2] != null && cells[2] == cells[4] && cells[2] == cells[6]) {
-            return WinInfo(WinType.DIAGONAL_ANTI)
-        }
-        return null
-    }
-
-    fun winnerSymbol(cells: List<String?>): String? {
-        val info = checkWinnerFlat(cells) ?: return null
-        return when (info.type) {
-            WinType.ROW -> cells[info.index * 3]
-            WinType.COLUMN -> cells[info.index]
-            WinType.DIAGONAL_MAIN -> cells[0]
-            WinType.DIAGONAL_ANTI -> cells[2]
-        }
-    }
-
-    fun minimax(cells: MutableList<String?>, maximizing: Boolean): Int {
-        val win = winnerSymbol(cells)
-        if (win == "O") return 1
-        if (win == "X") return -1
-        if (cells.all { it != null }) return 0
-
-        return if (maximizing) {
-            var best = Int.MIN_VALUE
-            for (i in cells.indices) {
-                if (cells[i] == null) {
-                    cells[i] = "O"
-                    val score = minimax(cells, false)
-                    cells[i] = null
-                    if (score > best) best = score
-                }
-            }
-            best
-        } else {
-            var best = Int.MAX_VALUE
-            for (i in cells.indices) {
-                if (cells[i] == null) {
-                    cells[i] = "X"
-                    val score = minimax(cells, true)
-                    cells[i] = null
-                    if (score < best) best = score
-                }
-            }
-            best
-        }
-    }
-
-    fun bestMove(cells: List<String?>): Int? {
-        var bestScore = Int.MIN_VALUE
-        var move: Int? = null
-        for (i in cells.indices) {
-            if (cells[i] == null) {
-                val copy = cells.toMutableList()
-                copy[i] = "O"
-                val score = minimax(copy, false)
-                if (score > bestScore) {
-                    bestScore = score
-                    move = i
-                }
-            }
-        }
-        return move
-    }
 
     val statusText by remember(board, winInfo, currentPlayer) {
         derivedStateOf {
@@ -163,7 +165,6 @@ fun GameScreen(modifier: Modifier = Modifier) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Верхняя панель: статус + новая игра
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -190,7 +191,6 @@ fun GameScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        // Игровое поле (квадрат)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -208,7 +208,6 @@ fun GameScreen(modifier: Modifier = Modifier) {
                                 val idx = r * 3 + c
                                 val cell = board[idx]
 
-                                // Подсветка нажатия через InteractionSource
                                 val interaction = remember { MutableInteractionSource() }
                                 val pressed by interaction.collectIsPressedAsState()
 
@@ -267,7 +266,6 @@ fun GameScreen(modifier: Modifier = Modifier) {
                     }
                 }
 
-                // Линия победы с неоновым свечением
                 winInfo?.let { info ->
                     val winLineColor = MaterialTheme.colorScheme.primary.toArgb()
                     val progress by animateFloatAsState(targetValue = 1f, label = "win-line")
@@ -324,3 +322,4 @@ fun GameScreen(modifier: Modifier = Modifier) {
         }
     }
 }
+
